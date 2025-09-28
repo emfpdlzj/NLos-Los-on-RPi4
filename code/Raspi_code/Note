@@ -1,0 +1,12 @@
+모델 돌려서 H5파일 만듬
+h5 > tflite > cc > 빌드 > 라즈베리 파이 실행 
+
+# h5파일은 모델 및 가중치를 갖고있음
+
+#파일을 c 소스 코드로 저장
+!xxd -i sine_model_quantized.tflite > sine_model_quantized.cc
+
+xxd -i cnn_classify_model.tflite > cnn_classify_model.cc
+xxd -i slice_cnn_model.tflite > slice_cnn_model.cc
+
+빌드시 항상 tflm에서 제공한 마이크로파일로 하면됨.
