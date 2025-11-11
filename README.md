@@ -52,19 +52,6 @@ python3 -m pip install --upgrade tflite-runtime
 
 ---
 
-## Evaluation
-
-```bash
-python code/eval.py \
-  --data_dir matrix/ \
-  --model_path code/ckpt/best_model.h5 \
-  --out_dir image/
-```
-
-지표(예시): Accuracy, Precision/Recall/F1, ROC-AUC, Confusion Matrix
-
----
-
 ## Model Compression & TFLite Export
 
 우선 **Post-Training Quantization(PTQ)** 로 용량/지연 줄이기. 필요 시 **QAT**.
@@ -84,14 +71,6 @@ python code/export_tflite.py \
 추후 수정예정
 
 - Self-Attention-Assisted_TinyML_With_Effective_Representation_for_UWB_NLOS_Identification
-
-
-
----
-
-## License
-
-연구용(WIP). 추후 명시.
 
 ---
 

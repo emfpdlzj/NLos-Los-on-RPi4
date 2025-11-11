@@ -1,4 +1,115 @@
-./image
-./dataset
-./code/Raspi_code
-./code/result
+# =========================
+# Python / 일반
+# =========================
+__pycache__/
+*.py[cod]
+*.pyo
+*.so
+*.dll
+*.dylib
+*.egg-info/
+dist/
+build/
+.eggs/
+*.log
+.cache/
+.tmp/
+.temp/
+
+# Jupyter
+.ipynb_checkpoints/
+.profile_default/
+*.nbconvert.ipynb
+
+# 테스트/정적분석 캐시
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyre/
+
+# 가상환경
+.venv/
+venv/
+env/
+ENV/
+.python-version  # pyenv
+.conda/
+conda-env/
+pip-wheel-metadata/
+
+# IDE/OS 잡파일
+.vscode/
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
+
+# =========================
+# ML 일반 산출물
+# =========================
+
+# 모델 파일
+*.h5
+*.keras
+*.ckpt
+*.ckpt.*
+*.safetensors
+
+# TensorFlow / Keras 저장 형식
+# SavedModel 디렉터리(최상위에 saved_model.pb와 variables/, assets/가 생김)
+saved_model.pb
+variables/
+assets/
+
+# ONNX / TFLite 등 배포 포맷
+*.onnx
+*.tflite
+*.edgetpu.tflite
+
+# 학습 로그 & 메타
+logs/
+**/logs/
+**/lightning_logs/
+events.out.tfevents.*
+
+# 체크포인트/모델 폴더(프로젝트에서 사용하는 관례적 이름)
+checkpoints/
+models/
+outputs/
+artifacts/
+runs/
+
+# TFRecord & 데이터 변환 산출물
+*.tfrecord
+*.tfrecords
+
+# Ray/Tune, WandB 등 실험 로그(사용 시)
+ray_results/
+wandb/
+mlruns/
+
+# =========================
+# 데이터셋(샘플만 버전관리하고 원본은 제외 권장)
+# =========================
+data/
+datasets/
+.dataset/
+.cache-dataset/
+# 위 폴더를 버전관리하고 싶다면 폴더 안에 .gitkeep 파일만 남기고
+# 실제 대용량 파일은 .gitignore로 제외하세요.
+
+# =========================
+# 운영/배포 관련(선택)
+# =========================
+*.pid
+celerybeat-schedule
+instance/
+*.db
+*.sqlite3
+
+# Docker(선택)
+docker-data/
+
+.gitignore
+*.h5
+*.png

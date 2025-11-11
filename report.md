@@ -1,12 +1,13 @@
 # Self-Attention-Assisted_TinyML_With_Effective_Representation_for_UWB_NLOS_Identification
 를 따라해보면서 기록
 
+## 언젠가 시간날 때 수정하기..
 논문에 언급된 방식들
 
 dataset 7은 inference용으로 제외함.
 
 ### 0. 깃허브에 사용된 CNN
-(https://github.com/tycheyoung/LOS-NLOS-Classification-CNN?tab=readme-ov-file)
+[(https://github.com/tycheyoung/LOS-NLOS-Classification-CNN?tab=readme-ov-file)](https://github.com/tycheyoung/LOS-NLOS-Classification-CNN)
 
 **feature selection에 있어서 차이**  
 본 논문은 fp_index를 기준으로 -2부터 +47까지 자름
