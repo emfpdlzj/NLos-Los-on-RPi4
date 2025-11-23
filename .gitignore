@@ -112,4 +112,3 @@ docker-data/
 
 .gitignore
 *.h5
-*.png

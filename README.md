@@ -1,83 +1,121 @@
-# TinyML LoS/NLoS Classification on Raspberry Pi 4 (WIP)(미완)
+# TinyML LoS/NLoS Classification on Raspberry Pi 4 
 
-UWB CIR(Channel Impulse Response) 데이터를 이용해 **LoS / NLoS** 를 분류하고, 학습된 모델을 **Raspberry Pi 4** 에서 **TinyML(TensorFlow Lite)** 로 구동하는 연구 저장소입니다.
+UWB **CIR (Channel Impulse Response)** 데이터를 이용해 **LoS / NLoS**를 분류하고, 학습된 모델을 **Raspberry Pi 4**에서 **TinyML (TensorFlow Lite / TFLite-Micro)** 로 구동하는 연구용 저장소입니다.  
+베이스라인은 1D-CNN이며, **FCN, CNN-LSTM, CNN-stacked-LSTM, CNN-bi-LSTM, FCN-Attention**, 그리고 타깃 논문 방식의 **Self-Attention-Assisted TinyML**까지 비교합니다.
 
-> 목표: 임베디드 환경에서 **가벼운 모델**로 **실시간 분류**를 달성하고, **전처리–학습–경량화–배포**를 일관된 파이프라인으로 정리하기.
+> **진행 상태:** 연구 기록은 `report.md`에, 타깃 논문 요약은 `+타깃논문.md`에 정리되어 있습니다.  
 
-기본 베이스라인은 **1D-CNN**. 추가 실험으로 **FCN, CNN-LSTM, CNN-stacked-LSTM, CNN-bi-LSTM, FCN-Attention** 등을 비교합니다.
+기간: 25.7.8 ~ 25.8.31
+---
+
+## ✨ 핵심 요약 (TL;DR)
+
+- **데이터**: eWINE UWB CIR (LoS/NLoS) → 정규화 & 슬라이싱 → 특성 행렬
+- **모델**: 1D-CNN(기본), FCN, CNN-LSTM/Stacked/Bi-LSTM, FCN-Attention, Self-Attention-Assisted MLP
+- **전처리**:  
+  - (기본) `argmax` 기준 ±50(총 100) 윈도우  
+  - (논문) `fp_index −2 … +47`(총 50) 윈도우  
+- **분할**: 60/20/20(논문) 또는 고정 개수(예: 25k/12k/5k) 실험 병행
+- **경량화**: TFLite **PTQ** (weights-only int8, **Full-INT8**: 500 샘플 캘리브레이션)  
+- **배포**: Raspberry Pi 4 + `tflite-runtime`로 실시간 추론
 
 ---
 
-## TL;DR
+## 📂 저장소 구조
 
-* 데이터: UWB CIR → 정규화/슬라이싱 → 특성 행렬
-* 모델: CNN 기반(추가 실험: FCN, CNN-LSTM, FCN-Attention 등)
-* 경량화: TFLite(PTQ), 필요 시 QAT
-* 배포: RPi4 + `tflite-runtime` 로 실시간 추론
-* 진행상태: **연구 진행중(WIP)** – 실험 로그/보고서는 `report.md` 
+tinymllab/ <br>
+├─ code/        # PC 학습·평가·변환 스크립트 (전처리, 학습, TFLite 변환 등). <br>
+├─ dataset/     # (비공개) 원천/가공 데이터. <br>
+├─ image/       # 아키텍처 도식, 논문 인용 그림 등<br>
+├─ matrix/      # confusion matrix<br>
+├─ picode/      # Raspberry Pi 4 추론 스크립트 (tflite-runtime)<br>
+├─ report.md    # 실험 기록/메모 (모델별 결과 스크린샷 포함)<br>
+├─ +타깃논문.md  # TinyML 리뷰 논문 요약 (세미나 정리본)<br>
+└─ README.md<br>
 
 ---
 
-## Repository Structure
+## 🧪 데이터셋
+
+- **출처**: eWINE 프로젝트 — *UWB LOS/NLOS Data Set* (CC-BY-4.0)  
+- **특징**: 7개 실내 환경에서 수집한 UWB CIR (LoS/NLoS)  
+
+### 전처리 방식
+
+1) Argmax 기반 (일반적 방법)
+```python
+# 강한 신호 지점(argmax) 기준으로 앞뒤 50씩 총 100 길이
+Nnew = []
+for item in x_train:
+    item = item[max([0, item.argmax()-50]) : item.argmax()+50]
+    Nnew.append(item)
+x_train = np.asarray(Nnew)
+```
+
+2. **논문 기준 (fp_index)**
+
+	•	fp_index − 2 … fp_index + 47 → 총 50 길이 <br>
+	•	최종 실험 6번 파트에서 fp_index 기준도 별도 비교
+
+데이터 분할  
+	•	논문 기본: 60 / 20 / 20  
+	•	실험 반복성: 25,000 / 12,000 / 5,000 샘플로도 병행 평가  
+
+⸻
+
+🏗️ 모델 구성
+```
+베이스라인 및 변형들
+	•	1D-CNN
+	•	Conv1D + ReLU, MaxPooling(공간 축소), FC + Softmax(2-class)
+	•	가중치 수를 층 간 일정하게 유지하도록 채널 수 조절 (논문 권고)
+	•	최적화: Adam, 배치 256, Dropout 0.5
+	•	CNN-LSTM / CNN-Stacked-LSTM / CNN-Bi-LSTM
+	•	동일 CNN feature extractor 뒤에 LSTM (hidden=32, lr=1e-3)
+	•	논문에 구체 레이어 스펙은 없어 관례적 설계로 구현, 층 수(1~4) 비교
+
+	•	FCN / FCN-Attention
+	•	[FCN] Conv-BN-ReLU 블록 ×3 + 중간 MaxPooling
+	•	[FCN-Attention] FCN feature 뒤 Self-Attention 블록 추가
+
+	•	Depthwise CNN (Xception 스타일)
+	•	Depthwise Separable Conv + Residual
+	•	MLP (경량 베이스라인)
+
+타깃 논문 방식: Self-Attention-Assisted TinyML
+	•	사전학습 분류기(FC×5 + BN×3)에서 초기 3개 층 Freeze
+	•	그 위에 Self-Attention + 축소된 분류기를 재학습
+	•	최적화 Adam, CE loss, batch 256, epochs 350
+
+	•	PTQ + Full-INT8(QAT 대체 가능)로 임베디드 추론 최적화
+```
+
+report.md에 각 모델의 혼동행렬(matrix/*.png)과 점수 그래프(code/result/*.png)가 포함되어 있습니다.
+
+---
+
+⚙️ 환경
+
+PC (학습/변환)<br>
+	•	Python 3.10+<br>
+	•	주요 패키지: numpy, pandas, scikit-learn, tensorflow (2.13~2.15 권장), matplotlib <br>
+
+Raspberry Pi 4 (추론)<br>
 
 ```
-tinymllab/
-├─ code/        # PC 학습/평가/변환 스크립트 (전처리, 학습, tflite 변환 등)
-├─ dataset/     # (로컬 비공개) 원천 데이터 또는 다운로드/가공 결과 위치
-├─ image/       # 보고서용 결과 그래프/혼동행렬/아키텍처 그림 등
-├─ matrix/      # 전처리 후 특성 행렬(NPY/CSV 등) 저장 위치
-├─ picode/      # Raspberry Pi 4 추론 스크립트 (tflite-runtime 사용)
-├─ report.md    # 실험 요약/회의록/메모
-└─ README.md
-```
-
----
-
-## Environment
-
-### PC (학습/변환)
-
-* Python 3.10+
-* 주요 패키지: `numpy`, `pandas`, `scikit-learn`, `tensorflow` (2.13~2.15 권장), `matplotlib`
-
-
-### Raspberry Pi 4 (추론)
-
-* Raspberry Pi 4 OS
-* `tflite-runtime` (TensorFlow 대신 경량 런타임)
-
-```bash
 python3 -m pip install --upgrade tflite-runtime
 ```
 
 ---
 
-## Model Compression & TFLite Export
+🔗 참고 자료 (References) <br>
+	•	데이터셋: eWINE — UWB LOS/NLOS Data Set (CC-BY-4.0)<br>
+	•	GitHub: https://github.com/ewine-project/UWB-LOS-NLOS-Data-Set<br>
+	•	베이스라인 CNN 구현: https://github.com/tycheyoung/LOS-NLOS-Classification-CNN <br>
+	•	Self-Attention-Assisted TinyML for UWB NLoS Identification (타깃 논문) <br>
+	•	TinyML Review: A review on TinyML: State-of-the-art and prospects (Partha Pratim Ray, 2021)<br>
 
-우선 **Post-Training Quantization(PTQ)** 로 용량/지연 줄이기. 필요 시 **QAT**.
+논문/그림 인용은 원 저작권을 따르며, 본 저장소의 코드/노트는 연구 재현을 목적으로 합니다.
 
-```bash
-# FP32 → TFLite (PTQ int8 예시)
-python code/export_tflite.py \
-  --model_path code/ckpt/best_model.h5 \
-  --calib_dir matrix/val/ \
-  --tflite_path code/ckpt/model_int8.tflite \
-  --quantize int8
-```
 
----
 
-## Reference
-추후 수정예정
-
-- Self-Attention-Assisted_TinyML_With_Effective_Representation_for_UWB_NLOS_Identification
-
----
-
-## Data Source / Dataset 출처
-
-본 연구에서는 **eWINE 프로젝트의 UWB LOS/NLOS 데이터셋**을 사용했습니다.
-
-* GitHub 저장소: [ewine-project/UWB-LOS-NLOS-Data-Set](https://github.com/ewine-project/UWB-LOS-NLOS-Data-Set) ([GitHub][1])
-* 이 데이터셋은 7개의 실내 환경에서 LOS / NLOS 조건 하에서 수집된 UWB CIR 데이터를 포함합니다. ([GitHub][1])
-* CC-BY-4.0 라이선스 하에 제공되며, 이용 시 저작자 표기를 권장합니다. ([GitHub][1])
