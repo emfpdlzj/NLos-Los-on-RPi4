@@ -1,5 +1,6 @@
 # TinyML LoS/NLoS Classification on Raspberry Pi 4 
 
+#### target papger:Self-Attention-Assisted TinyML for UWB NLoS Identification <br>
 UWB **CIR (Channel Impulse Response)** 데이터를 이용해 **LoS / NLoS**를 분류하고, 학습된 모델을 **Raspberry Pi 4**에서 **TinyML (TensorFlow Lite / TFLite-Micro)** 로 구동하는 연구용 저장소입니다.  
 베이스라인은 1D-CNN이며, **FCN, CNN-LSTM, CNN-stacked-LSTM, CNN-bi-LSTM, FCN-Attention**, 그리고 타깃 논문 방식의 **Self-Attention-Assisted TinyML**까지 비교합니다.
 
@@ -66,28 +67,29 @@ x_train = np.asarray(Nnew)
 🏗️ 모델 구성
 ```
 베이스라인 및 변형들
-	•	1D-CNN
-	•	Conv1D + ReLU, MaxPooling(공간 축소), FC + Softmax(2-class)
-	•	가중치 수를 층 간 일정하게 유지하도록 채널 수 조절 (논문 권고)
-	•	최적화: Adam, 배치 256, Dropout 0.5
-	•	CNN-LSTM / CNN-Stacked-LSTM / CNN-Bi-LSTM
-	•	동일 CNN feature extractor 뒤에 LSTM (hidden=32, lr=1e-3)
-	•	논문에 구체 레이어 스펙은 없어 관례적 설계로 구현, 층 수(1~4) 비교
+1D-CNN
+	• Conv1D + ReLU, MaxPooling(공간 축소), FC + Softmax(2-class)
+	• 가중치 수를 층 간 일정하게 유지하도록 채널 수 조절 (논문 권고)
+	• 최적화: Adam, 배치 256, Dropout 0.5
 
-	•	FCN / FCN-Attention
-	•	[FCN] Conv-BN-ReLU 블록 ×3 + 중간 MaxPooling
-	•	[FCN-Attention] FCN feature 뒤 Self-Attention 블록 추가
+CNN-LSTM / CNN-Stacked-LSTM / CNN-Bi-LSTM
+	• 동일 CNN feature extractor 뒤에 LSTM (hidden=32, lr=1e-3)
+	• 논문에 구체 레이어 스펙은 없어 관례적 설계로 구현, 층 수(1~4) 비교
 
-	•	Depthwise CNN (Xception 스타일)
-	•	Depthwise Separable Conv + Residual
-	•	MLP (경량 베이스라인)
+FCN / FCN-Attention
+	• [FCN] Conv-BN-ReLU 블록 ×3 + 중간 MaxPooling
+	• [FCN-Attention] FCN feature 뒤 Self-Attention 블록 추가
 
-타깃 논문 방식: Self-Attention-Assisted TinyML
-	•	사전학습 분류기(FC×5 + BN×3)에서 초기 3개 층 Freeze
-	•	그 위에 Self-Attention + 축소된 분류기를 재학습
-	•	최적화 Adam, CE loss, batch 256, epochs 350
+Depthwise CNN (Xception 스타일)
+	• Depthwise Separable Conv + Residual
 
-	•	PTQ + Full-INT8(QAT 대체 가능)로 임베디드 추론 최적화
+MLP 
+
+Self-Attention-Assisted TinyML - 타깃 논문 방식
+	•사전학습 분류기(FC×5 + BN×3)에서 초기 3개 층 Freeze
+	•그 위에 Self-Attention + 축소된 분류기를 재학습
+	•최적화 Adam, CE loss, batch 256, epochs 350
+	•PTQ + Full-INT8(QAT 대체 가능)로 임베디드 추론 최적화
 ```
 
 report.md에 각 모델의 혼동행렬(matrix/*.png)과 점수 그래프(code/result/*.png)가 포함되어 있습니다.
