@@ -7,6 +7,7 @@ UWB **CIR (Channel Impulse Response)** 데이터를 이용해 **LoS / NLoS**를 
 > **진행 상태:** 연구 기록은 `report.md`에, 타깃 논문 요약은 `+타깃논문.md`에 정리되어 있습니다.  
 
 기간: 25.7.8 ~ 25.8.31
+
 ---
 
 ## ✨ 핵심 요약 (TL;DR)
@@ -23,7 +24,7 @@ UWB **CIR (Channel Impulse Response)** 데이터를 이용해 **LoS / NLoS**를 
 ---
 
 ## 📂 저장소 구조
-
+```
 tinymllab/ <br>
 ├─ code/        # PC 학습·평가·변환 스크립트 (전처리, 학습, TFLite 변환 등). <br>
 ├─ dataset/     # (비공개) 원천/가공 데이터. <br>
@@ -33,7 +34,7 @@ tinymllab/ <br>
 ├─ report.md    # 실험 기록/메모 (모델별 결과 스크린샷 포함)<br>
 ├─ +타깃논문.md  # TinyML 리뷰 논문 요약 (세미나 정리본)<br>
 └─ README.md<br>
-
+```
 ---
 
 ## 🧪 데이터셋
@@ -62,9 +63,9 @@ x_train = np.asarray(Nnew)
 	•	논문 기본: 60 / 20 / 20  
 	•	실험 반복성: 25,000 / 12,000 / 5,000 샘플로도 병행 평가  
 
-⸻
+---
 
-🏗️ 모델 구성
+### 🏗️ 모델 구성
 ```
 베이스라인 및 변형들
 1D-CNN
@@ -96,7 +97,7 @@ report.md에 각 모델의 혼동행렬(matrix/*.png)과 점수 그래프(code/r
 
 ---
 
-⚙️ 환경
+### ⚙️ 환경
 
 PC (학습/변환)<br>
 	•	Python 3.10+<br>
@@ -110,7 +111,7 @@ python3 -m pip install --upgrade tflite-runtime
 
 ---
 
-🔗 참고 자료 (References) <br>
+### 🔗 참고 자료 (References) <br>
 	•	데이터셋: eWINE — UWB LOS/NLOS Data Set (CC-BY-4.0)<br>
 	•	GitHub: https://github.com/ewine-project/UWB-LOS-NLOS-Data-Set<br>
 	•	베이스라인 CNN 구현: https://github.com/tycheyoung/LOS-NLOS-Classification-CNN <br>
